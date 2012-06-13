@@ -1,6 +1,7 @@
 from daemon import Daemon
 import sys
 import os
+import urllib
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 
 PORT = 8000
@@ -11,17 +12,24 @@ def conf_file(mode):
 class ThrowServerHandler(BaseHTTPRequestHandler):
 
 	def do_GET(self):
-		self.send_response(200)
-		self.send_header("Content-type", "text/html")
-		self.end_headers()
+		if self.path == "/":
+			self.send_response(200)
+			self.send_header("Content-type", "text/html")
+			self.end_headers()
 
-		files_raw = conf_file('r').read()
-		
-		for mfile in files_raw.split('\n'):
-			if mfile:
-				self.wfile.write("<a>%s</a>\n"%mfile)
+			files_raw = conf_file('r').read()
+			
+			for mfile in files_raw.split('\n'):
+				if mfile:
+					self.wfile.write('<a href="%s">%s</a>\n'%(urllib.quote(mfile),mfile))
+		else:
+			self.send_response(200)
+			self.send_header("Content-type", "text/html")
+			self.end_headers()
 
-		self.wfile.close()
+			f = open(self.path,'r')
+			self.wfile.write(f.read())
+			self.wfile.close()
 
 class ServerDaemon(Daemon):
 
@@ -32,7 +40,7 @@ class ServerDaemon(Daemon):
 
 	def add_file(self,path):
 		w = conf_file('a')
-		w.write('%s\n'%path)
+		w.write('%s/%s\n'%(os.getcwd(),path))
 		w.close()
 
 if __name__ == "__main__":

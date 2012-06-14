@@ -66,19 +66,21 @@ class Daemon:
 	def delpid(self):
 		os.remove(self.pidfile)
 
-	def start(self):
-		"""
-		Start the daemon
-		"""
-		# Check for a pidfile to see if the daemon already runs
+	def is_launched(self):
 		try:
 			pf = file(self.pidfile,'r')
 			pid = int(pf.read().strip())
 			pf.close()
 		except IOError:
 			pid = None
-	
-		if pid:
+		return pid
+
+	def start(self):
+		"""
+		Start the daemon
+		"""
+		# Check for a pidfile to see if the daemon already runs
+		if self.is_launched():
 			message = "pidfile %s already exist. Daemon already running?\n"
 			sys.stderr.write(message % self.pidfile)
 			sys.exit(1)
